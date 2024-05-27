@@ -1,0 +1,15 @@
+# Logs
+logs
+*.log
+
+# Dependency directories
+node_modules/
+
+# Environment variable files
+.env
+opn_payment_api/server/.env
+opn_payment_api/public/.env
+
+# Build output
+dist/
+build/
