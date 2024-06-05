@@ -51,10 +51,6 @@ app.post('/create-charge', async (req, res) => {
     try {
         const { sourceId, amount, currency } = req.body;
         
-        // Validate amount
-        if (amount < 2000 || amount > 15000000) { // Amount in subunits, e.g., satang
-            return res.status(400).json({ error: 'Amount must be between 20 THB and 150,000 THB.' });
-        }
         const charge = await omise.charges.create({
             'amount': amount,
             'currency': currency,

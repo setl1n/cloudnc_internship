@@ -4,125 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test PromptPay with Omise</title>
+    <title>Omise API Testing</title>
     <script src="https://cdn.omise.co/omise.js"></script>
-    <script type="text/javascript">
-        fetch('http://localhost:3000/public-key')
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                Omise.setPublicKey(data.OMISE_PUBLIC_KEY);
-            })
-
-        let currentChargeId = null;
-
-        function createSource() {
-            var amountInput = document.getElementById('amount');
-            var statusDisplay = document.getElementById('status');
-            var amount = parseInt(amountInput.value) * 100; // Convert to subunit, e.g., from baht to satang
-            var payButton = document.getElementById('payButton');
-
-            // Disable the input field and button, and update status
-            amountInput.disabled = true;
-            payButton.disabled = true;
-            statusDisplay.textContent = "Processing...";
-
-            Omise.createSource('promptpay', {
-                "amount": amount,
-                "currency": "THB"
-            }, handleSourceCreated);
-        }
-
-        function handleSourceCreated(statusCode, response) {
-            var statusDisplay = document.getElementById('status');
-            var amountInput = document.getElementById('amount');
-            var payButton = document.getElementById('payButton');
-
-            if (statusCode === 200) {
-                fetch('http://localhost:3000/create-charge', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sourceId: response.id,
-                        amount: response.amount,
-                        currency: response.currency,
-                    })
-                })
-                    .then(res => {
-                        if (!res.ok) {
-                            return res.json().then(err => { throw new Error(err.error) });
-                        }
-                        return res.json();
-                    })
-                    .then(data => {
-                        console.log(data);
-                        if (data.status === 'pending') {
-                            statusDisplay.textContent = "Pending Transfer";
-                            currentChargeId = data.id;
-
-                            // Display QR Code if available
-                            if (data.source && data.source.scannable_code && data.source.scannable_code.image && data.source.scannable_code.image.download_uri) {
-                                var qrCodeImage = document.getElementById('qrCode');
-                                qrCodeImage.src = data.source.scannable_code.image.download_uri;
-                                qrCodeImage.style.display = 'block';
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (error.message.includes('Amount must be between')) {
-                            statusDisplay.textContent = error.message;
-                            alert(error.message); // Prompt user to enter a valid amount
-                        } else {
-                            statusDisplay.textContent = "Failed to process the charge.";
-                        }
-                        amountInput.disabled = false;
-                        payButton.disabled = false;
-                    });
-            } else {
-                console.error(response);
-                statusDisplay.textContent = "Failed to create source.";
-                amountInput.disabled = false;
-                payButton.disabled = false;
-            }
-        }
-
-
-        // WebSocket setup
-        const ws = new WebSocket('ws://localhost:3000');
-
-        ws.onopen = () => {
-            console.log('WebSocket connection opened');
-        };
-
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            // only process message from server if it matches charge ID and is a charge.complete type
-            if (message.data.id === currentChargeId && message.type === 'charge.complete') {
-                // Additional logic to update the UI or redirect the user
-                if (message.data.status === 'successful') {
-                    document.getElementById('qrCode').style.display = 'none';
-                    document.getElementById('status').textContent = 'Payment successful!';
-                    console.log('Charge complete:', message.data);
-                } else if (message.data.status === 'failed') {
-                    document.getElementById('qrCode').style.display = 'none';
-                    document.getElementById('status').textContent = 'Payment failed because: ' + message.data.failure_message;
-                }
-            } else {
-                // methods to process other messages
-            }
-        };
-
-        ws.onclose = () => {
-            console.log('WebSocket connection closed');
-        };
-
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-    </script>
+    <script src="scripts/setPublicKey.js"></script>
+    <script src="scripts/processInput.js"></script>
+    <script src="scripts/promptPay.js"></script>
+    <script src="scripts/processWebHooks.js"></script>
     <style>
         #qrCode {
             display: none;
@@ -134,17 +21,15 @@
 
 <body>
     <div id="disclaimer">
-        <h2>Disclaimer</h2>
-        <p><strong>Voids and refunds:</strong> PromptPay charges cannot be voided or refunded through Opn Payments.</p>
         <p><strong>Limits:</strong></p>
         <ul>
             <li>Minimum: 20THB</li>
             <li>Maximum: 150,000THB</li>
         </ul>
     </div>
-    <h1>Omise PromptPay Testing</h1>
+    <h1>Omise API Testing</h1>
     <input type="number" id="amount" placeholder="Enter amount in THB" />
-    <button id="payButton" onclick="createSource()">Pay with PromptPay</button>
+    <button id="promptPayButton" onclick="payWithPromptPay()">Pay with PromptPay</button>
     <div id="status"></div>
     <img id="qrCode" alt="QR Code" />
 </body>
