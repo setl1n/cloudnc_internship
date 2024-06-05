@@ -20,11 +20,11 @@ This project demonstrates handling webhooks from Omise.js using a Node.js server
    npm install
    ```
 3. **Create Opn Payments' Omise API account**  
-   Create a *[free Opn Payments' Omise API account](https://dashboard.omise.co/v2)* to generate own set of APIs for testing  
+   Create a *[free Opn Payments' Omise API account](https://dashboard.omise.co/v2)* to generate own set of API keys for testing  
 
 4. **Create .env file for API key configuration**  
    Create a new `.env` file in the `opn_payment_api` folder and insert your own API keys from your Opn Payments account in the format below:  
-   **Note:** API Keys can be found at Settings > Keys
+   **Note:** API Keys can be found at Settings > Keys on the Opn Website
    ```makefile
    OMISE_PUBLIC_KEY=<insert_own_public_key_here>
    OMISE_SECRET_KEY=<insert_own_private_key_here>
@@ -34,6 +34,25 @@ This project demonstrates handling webhooks from Omise.js using a Node.js server
    OMISE_PUBLIC_KEY=abcdefg
    OMISE_SECRET_KEY=123456
    ```
+
+## Install ngrok
+Check if ngrok is installed in your system by running the following command in terminal/command prompt:
+```bash
+ngrok version
+```
+You may skip these steps if ngrok is installed.
+1. **Install ngrok using Homebrew.**  
+If you are using macOS and have Homebrew installed, you can install ngrok using the following command:
+```bash
+brew install ngrok
+```
+2. **Sign up for a *[free ngrok account](https://ngrok.com/)* and get authorisation token from *[ngrok dashboard](https://dashboard.ngrok.com/)*.**
+Run the following command to set your authtoken:
+```bash
+ngrok authtoken YOUR_AUTHTOKEN
+```
+Replace YOUR_AUTHTOKEN with the token you copied.
+
 ## Running the server
 **Note:** You will need 3 concurrent terminal windows or tabs to run the client, server and ngrok simultaneously.
 1. **Start the server**  
@@ -47,11 +66,13 @@ This project demonstrates handling webhooks from Omise.js using a Node.js server
    npm run client
    ```
 3. **Expose the Server with ngrok**  
-   Use ngrok to expose the local server to the internet:
+   Use ngrok to expose the local server to the internet:  
+   **Note:** Server runs on port 3000 by default, change the command according to the port your server is running on.  
    ```bash
-   npm run start-ngrok
+   ngrok http 3000
    ```
-   This provides a public URL for webhook testing.
+     
+   This command provides a public URL for webhook testing.
 
 ## Testing Promptpay from Opn Payments
 1. **Configure Webhook URL**  
