@@ -26,6 +26,7 @@ app.use(bodyParser.json()); // Add this line to parse JSON request bodies
 
 let db;
 
+// attaches database to db variable for every request
 app.use(async (req, res, next) => {
     if (!db) {
         db = await connectToDatabase();
@@ -36,10 +37,8 @@ app.use(async (req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
-    db = await connectToDatabase();
     console.log(`Server running on port ${PORT}`);
 })
-
 
 wss.on('connection', (ws) => {
     console.log('New client connected');
@@ -54,9 +53,6 @@ wss.on('connection', (ws) => {
 
 // Simple GET route to verify the server is running
 app.get('/', async (req, res) => {
-    const collection = req.db.collection('transactions');
-    const documents = await collection.find({}).toArray();
-    console.log(documents);
     res.send('Server is running');
 });
 
@@ -91,6 +87,11 @@ app.post('/create-charge', async (req, res) => {
 app.post('/webhook', async (req, res) => {
     const event = req.body;
 
+    // assigning variables for database storage
+    const collection = req.db.collection('transactions');
+    const documents = await collection.find({}).toArray();
+    console.log(documents);
+    
     console.log('Received webhook event:');
     console.log('Event type: ', event.key);
 
