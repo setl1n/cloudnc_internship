@@ -98,50 +98,59 @@ app.post('/webhook', async (req, res) => {
         }
     } else if (event.key === 'charge.complete') {
         try {
-            if (event.data.status == 'successful') {
-                // Make a GET request to Omise API to verify the charge status
-                const chargeId = event.data.id;
-                const response = await axios.get(`https://api.omise.co/charges/${chargeId}`, {
-                    auth: {
-                        username: OMISE_SECRET_KEY,
-                        password: ''
-                    }
-                });
-                const verifiedCharge = response.data;
+            // Make a GET request to Omise API to verify the charge status
+            const chargeId = event.data.id;
+            const response = await axios.get(`https://api.omise.co/charges/${chargeId}`, {
+                auth: {
+                    username: OMISE_SECRET_KEY,
+                    password: ''
+                }
+            });
+            const verifiedCharge = response.data;
 
-                if (verifiedCharge.status === 'successful') {
-                    console.log('Charge independently verified as successful:', verifiedCharge);
+            // Update the transaction status in the database
+            const updatedTransaction = await Transaction.findOneAndUpdate(
+                { charge_id: chargeId },
+                { payment_status: verifiedCharge.status },
+                { new: true } // Return the updated document
+            );
 
+            if (updatedTransaction) {
+                console.log('Transaction status updated:', updatedTransaction);
+                if (updatedTransaction.payment_status == 'successful') {
                     // Notify all connected WebSocket clients
                     wss.clients.forEach(client => {
                         if (client.readyState === WebSocket.OPEN) {
                             client.send(JSON.stringify({
                                 type: 'charge.complete',
-                                data: verifiedCharge
+                                data: updatedTransaction
                             }));
                         }
                     });
                     // Process the verified successful charge
                     res.status(200).send('Charge was successful. Verified and processed');
+                } else if (updatedTransaction.payment_status == 'failed') {
+                    wss.clients.forEach(client => {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(JSON.stringify({
+                                type: 'charge.complete',
+                                data: updatedTransaction
+                            }));
+                        }
+                    });
+                    res.status(200).send('Payment failed but was processed successfully by the server and client.');
+                } else {
+                    // charge expiered
+                    console.log('Charge expired.');
+                    res.status(501).send('Unhandled expired event');
                 }
-            } else if (event.data.status == 'failed') {
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({
-                            type: 'charge.complete',
-                            data: event.data
-                        }));
-                    }
-                });
-                res.status(200).send('Payment failed but was processed successfully by the server and client.');
             } else {
-                // charge expiered
-                console.log('Charge expired.');
-                res.status(501).send('Unhandled expired event');
+                res.status(404).send('Transaction not found');
             }
+
         } catch (error) {
-            console.error('Error verifying charge:', error);
-            res.status(500).send('Error verifying charge');
+            console.error('Error verifying charge or updating transaction status:', error);
+            res.status(500).send('Error processing charge.complete event');
         }
     } else {
         console.log('Unhandled event type:', event.key);
