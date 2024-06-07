@@ -39,8 +39,11 @@
                     return res.json();
                 })
                 .then(data => {
-                    console.log("Charge created: ", data);
-                    window.open(data.authorize_uri, '_blank');
+                    if (data.status === 'pending') {
+                        statusDisplay.textContent = "Pending Transfer";
+                        currentChargeId = data.id;
+                        window.open(data.authorize_uri, '_blank');
+                    }
                 })
                 .catch(error => {
                     console.error('Error creating charge: ', error);

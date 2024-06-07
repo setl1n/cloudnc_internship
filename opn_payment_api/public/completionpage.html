@@ -8,10 +8,23 @@
 </head>
 
 <body>
-    <div id="disclaimer">
-    </div>
     <h1>Rabbit LINE Payment Status:</h1>
-    <div id="status">placeholder</div>
+    <div id="status"></div>
+    <script type="text/javascript">
+        async function getStatus(sourceId) {
+            // Simulate an API call to get status
+            return true; // Return true for demonstration purposes
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            let queryString = window.location.search;
+            let urlParams = new URLSearchParams(queryString);
+            let sourceId = urlParams.get('sourceid');
+            let statusFromApi = await getStatus(sourceId);
+            let statusDisplay = document.getElementById("status");
+            statusDisplay.textContent = statusFromApi ? 'Payment completed successfully' : 'Something went wrong';
+        });
+    </script>
 </body>
 
 </html>

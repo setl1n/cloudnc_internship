@@ -71,11 +71,6 @@ app.post('/create-charge', async (req, res) => {
             'return_uri': return_uri,
         });
 
-        console.log("charge from server: ", charge);
-        if (charge.source.type == 'rabbit_linepay' && charge.status == 'pending' && charge.return_uri) {
-            console.log("line pay");
-            //res.redirect(charge.authorize_uri);
-        }
         res.status(200).json(charge);
     } catch (error) {
         console.error('Error creating charge:', error); // Log the error to the console
@@ -108,11 +103,10 @@ app.post('/webhook', async (req, res) => {
                         password: ''
                     }
                 });
-                console.log("response from omise\n", response)
                 const verifiedCharge = response.data;
 
                 if (verifiedCharge.status === 'successful') {
-                    console.log('Charge verified as successful:', verifiedCharge);
+                    console.log('Charge independently verified as successful:', verifiedCharge);
 
                     // Notify all connected WebSocket clients
                     wss.clients.forEach(client => {

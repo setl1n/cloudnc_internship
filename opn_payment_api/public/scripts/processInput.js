@@ -1,5 +1,3 @@
-var currentChargeId = null;
-
 function processInput() {
     let inputAmount = parseInt(document.getElementById('amount').value) * 100;
     let minAmount = 2000; // Minimum amount in satangs
