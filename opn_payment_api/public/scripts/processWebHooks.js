@@ -7,14 +7,15 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    console.log(message);
     // only process message from server if it matches charge ID and is a charge.complete type
-    if (message.data.id === currentChargeId && message.type === 'charge.complete') {
+    if (message.data.charge_id === currentChargeId && message.type === 'charge.complete') {
         // Additional logic to update the UI or redirect the user
-        if (message.data.status === 'successful') {
+        if (message.data.payment_status === 'successful') {
             document.getElementById('qrCode').style.display = 'none';
             document.getElementById('status').textContent = 'Payment successful!';
             console.log('Charge complete:', message.data);
-        } else if (message.data.status === 'failed') {
+        } else if (message.data.payment_status === 'failed') {
             document.getElementById('qrCode').style.display = 'none';
             document.getElementById('status').textContent = 'Payment failed because: ' + message.data.failure_message;
         }

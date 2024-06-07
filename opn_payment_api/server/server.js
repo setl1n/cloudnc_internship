@@ -83,6 +83,7 @@ app.post('/webhook', async (req, res) => {
             charge_id: event.data.id,
             payment_status: event.data.status,
             amount: event.data.amount,
+            failure_message: event.data.failure_message,
             currency: event.data.currency,
             created_at: new Date() // Optional, as it will default to current date
         });
@@ -107,11 +108,14 @@ app.post('/webhook', async (req, res) => {
                 }
             });
             const verifiedCharge = response.data;
-
+            console.log(verifiedCharge);
             // Update the transaction status in the database
             const updatedTransaction = await Transaction.findOneAndUpdate(
                 { charge_id: chargeId },
-                { payment_status: verifiedCharge.status },
+                {
+                    payment_status: verifiedCharge.status,
+                    failure_message: verifiedCharge.failure_message
+                },
                 { new: true } // Return the updated document
             );
 

@@ -6,6 +6,7 @@ const transactionSchema = new Schema({
     charge_id: { type: String, required: true, unique: true },
     payment_status: { type: String, enum: ['pending', 'successful', 'failed', 'expired'], required: true },
     amount: { type: Number, required: true },
+    failure_message: { type: String, required: false },
     currency: { type: String, required: true },
     created_at: { type: Date, default: () => new Date() }
 });
