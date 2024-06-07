@@ -13,7 +13,7 @@ const omise = require('omise')({
 const http = require('http');
 const WebSocket = require('ws');
 
-
+const connectToDatabase = require('./services/db.js');
 
 
 const app = express();
@@ -24,8 +24,22 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(bodyParser.json()); // Add this line to parse JSON request bodies
 
+let db;
+
+app.use(async (req, res, next) => {
+    if (!db) {
+        db = await connectToDatabase();
+    }
+    req.db = db;
+    next();
+});
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, async () => {
+    db = await connectToDatabase();
+    console.log(`Server running on port ${PORT}`);
+})
+
 
 wss.on('connection', (ws) => {
     console.log('New client connected');
@@ -39,7 +53,10 @@ wss.on('connection', (ws) => {
 
 
 // Simple GET route to verify the server is running
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+    const collection = req.db.collection('transactions');
+    const documents = await collection.find({}).toArray();
+    console.log(documents);
     res.send('Server is running');
 });
 
@@ -49,8 +66,8 @@ app.get('/public-key', (req, res) => {
 
 app.post('/create-charge', async (req, res) => {
     try {
-        const { sourceId, amount, currency , return_uri} = req.body;
-        
+        const { sourceId, amount, currency, return_uri } = req.body;
+
         const charge = await omise.charges.create({
             'amount': amount,
             'currency': currency,
@@ -58,8 +75,8 @@ app.post('/create-charge', async (req, res) => {
             'return_uri': return_uri,
         });
 
-        console.log("charge from server: " , charge);
-        if (charge.source.type=='rabbit_linepay' && charge.status=='pending' && charge.return_uri) {
+        console.log("charge from server: ", charge);
+        if (charge.source.type == 'rabbit_linepay' && charge.status == 'pending' && charge.return_uri) {
             console.log("line pay");
             //res.redirect(charge.authorize_uri);
         }
@@ -132,3 +149,5 @@ app.post('/webhook', async (req, res) => {
         res.status(200).send('Unhandled event type');
     }
 });
+
+
