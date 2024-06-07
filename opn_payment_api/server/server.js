@@ -49,13 +49,20 @@ app.get('/public-key', (req, res) => {
 
 app.post('/create-charge', async (req, res) => {
     try {
-        const { sourceId, amount, currency } = req.body;
+        const { sourceId, amount, currency , return_uri} = req.body;
         
         const charge = await omise.charges.create({
             'amount': amount,
             'currency': currency,
             'source': sourceId,
+            'return_uri': return_uri,
         });
+
+        console.log("charge from server: " , charge);
+        if (charge.source.type=='rabbit_linepay' && charge.status=='pending' && charge.return_uri) {
+            console.log("line pay");
+            //res.redirect(charge.authorize_uri);
+        }
         res.status(200).json(charge);
     } catch (error) {
         console.error('Error creating charge:', error); // Log the error to the console

@@ -9,6 +9,7 @@
     <script src="scripts/setPublicKey.js"></script>
     <script src="scripts/processInput.js"></script>
     <script src="scripts/promptPay.js"></script>
+    <script src="scripts/linePay.js"></script>
     <script src="scripts/processWebHooks.js"></script>
     <style>
         #qrCode {
@@ -30,6 +31,7 @@
     <h1>Omise API Testing</h1>
     <input type="number" id="amount" placeholder="Enter amount in THB" />
     <button id="promptPayButton" onclick="payWithPromptPay()">Pay with PromptPay</button>
+    <button id="rabbitLinePayButton" onclick="payWithLinePay()">Pay with Rabbit LINE Pay</button>
     <div id="status"></div>
     <img id="qrCode" alt="QR Code" />
 </body>

@@ -25,11 +25,6 @@ function disableInputs() {
     inputField.disabled = true;
     let promptPayButton = document.getElementById('promptPayButton');
     promptPayButton.disabled = true;
-}
-
-function enableInputs() {
-    let inputField = document.getElementById('amount');
-    inputField.disabled = false;
-    let promptPayButton = document.getElementById('promptPayButton');
-    promptPayButton.disabled = false;
+    let rabbitLinePayButton = document.getElementById('rabbitLinePayButton');
+    rabbitLinePayButton.disabled = true;
 }
