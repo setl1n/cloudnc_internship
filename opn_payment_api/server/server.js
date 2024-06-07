@@ -69,6 +69,32 @@ app.post('/create-charge', async (req, res) => {
     }
 });
 
+app.get('/check-source-status', async (req, res) => {
+    const sourceId = req.query.source_id;
+    if (!sourceId) {
+        return res.status(400).send('source_id query parameter is required');
+    }
+
+    try {
+        const transaction = await Transaction.findOne({ source_id: sourceId });
+
+        if (!transaction) {
+            return res.status(404).send('Transaction not found');
+        }
+
+        res.status(200).json({
+            payment_status: transaction.payment_status,
+            failure_message: transaction.failure_message,
+            amount: transaction.amount,
+            currency: transaction.currency,
+            created_at: transaction.created_at
+        });
+    } catch (error) {
+        console.error('Error fetching transaction:', error);
+        res.status(500).send('Internal server error');
+    }
+});
+
 // Endpoint to handle webhook events from Omise
 app.post('/webhook', async (req, res) => {
     const event = req.body;
