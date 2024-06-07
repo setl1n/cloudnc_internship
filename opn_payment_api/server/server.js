@@ -10,6 +10,7 @@ const omise = require('omise')({
     'secretKey': OMISE_SECRET_KEY,
     'omiseVersion': '2019-05-29'
 });
+const Transaction = require('./schemas/transactionSchema.js');
 const http = require('http');
 const WebSocket = require('ws');
 
@@ -24,19 +25,9 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(bodyParser.json()); // Add this line to parse JSON request bodies
 
-let db;
-
-// attaches database to db variable for every request
-app.use(async (req, res, next) => {
-    if (!db) {
-        db = await connectToDatabase();
-    }
-    req.db = db;
-    next();
-});
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
+    connectToDatabase()
     console.log(`Server running on port ${PORT}`);
 })
 
@@ -82,16 +73,29 @@ app.post('/create-charge', async (req, res) => {
 app.post('/webhook', async (req, res) => {
     const event = req.body;
 
-    // assigning variables for database storage
-    const collection = req.db.collection('transactions');
-    const documents = await collection.find({}).toArray();
-    console.log(documents);
-    
     console.log('Received webhook event:');
     console.log('Event type: ', event.key);
 
     if (event.key == 'charge.create') {
-        res.status(200).send('Charge.create webhook event, no action from server');
+        // Create a new transaction instance
+        const newTransaction = new Transaction({
+            source_id: event.data.source.id,
+            charge_id: event.data.id,
+            payment_status: event.data.status,
+            amount: event.data.amount,
+            currency: event.data.currency,
+            created_at: new Date() // Optional, as it will default to current date
+        });
+
+        // Validate and save the data using Mongoose
+        try {
+            const savedTransaction = await newTransaction.save();
+            console.log('Transaction inserted into database:', savedTransaction);
+            res.status(200).send('Charge.create webhook event, no action from server');
+        } catch (error) {
+            console.error('Data Validation error:', error);
+            res.status(400).send('Invalid data');
+        }
     } else if (event.key === 'charge.complete') {
         try {
             if (event.data.status == 'successful') {
